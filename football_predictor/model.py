@@ -6,8 +6,8 @@ league average, so teams with little data (e.g. newly promoted sides) start
 from a sensible prior instead of from zero. European matches put every league
 on one common scale.
 
-    log(home xG) = mu + home_adv + attack[home] - defence[away]
-    log(away xG) = mu            + attack[away] - defence[home]
+    log(home xG) = mu + home_adv[competition] + attack[home] - defence[away]
+    log(away xG) = mu                         + attack[away] - defence[home]
 
 Goals are Poisson with the Dixon-Coles correction for low scores (0-0, 1-0,
 0-1, 1-1). Older matches count less (exponential decay with a half-life).
@@ -23,12 +23,14 @@ from scipy.stats import poisson
 from .config import (
     DOMESTIC_LEAGUES,
     HALF_LIFE_DAYS,
+    HOME_RIDGE,
     LEAGUE_RIDGE,
     TEAM_RIDGE,
 )
 
 MAX_GOALS = 10
 OTHER_LEAGUE = -1  # teams we only see in European competitions
+EUROPE = -2        # home-advantage key shared by all European matches
 
 
 @dataclass
@@ -42,10 +44,12 @@ class TeamRating:
 
 
 class DixonColesModel:
-    def __init__(self, half_life_days=HALF_LIFE_DAYS, team_ridge=TEAM_RIDGE, league_ridge=LEAGUE_RIDGE):
+    def __init__(self, half_life_days=HALF_LIFE_DAYS, team_ridge=TEAM_RIDGE, league_ridge=LEAGUE_RIDGE,
+                 home_ridge=HOME_RIDGE):
         self.half_life_days = half_life_days
         self.team_ridge = team_ridge
         self.league_ridge = league_ridge
+        self.home_ridge = home_ridge
 
     # ------------------------------------------------------------------ fit
 
@@ -68,23 +72,28 @@ class DixonColesModel:
         ai = df["away_id"].map(self.team_idx).to_numpy()
         hl = self.team_league[hi]
         al = self.team_league[ai]
-        eur = df["european"].to_numpy().astype(bool)
+        # Each domestic competition has its own home advantage; European ones share one.
+        comp_keys = np.where(df["european"].to_numpy().astype(bool), EUROPE, df["league_id"].to_numpy())
+        self.comp_ids = sorted(set(comp_keys.tolist()))
+        comp_idx = {c: i for i, c in enumerate(self.comp_ids)}
+        ci = np.array([comp_idx[c] for c in comp_keys])
         yh = df["home_goals"].to_numpy(float)
         ya = df["away_goals"].to_numpy(float)
-        nT, nL = len(self.team_ids), len(self.league_ids)
+        nT, nL, nC = len(self.team_ids), len(self.league_ids), len(self.comp_ids)
+        o = 2 + nC  # where the league parameters start
 
         def unpack(theta):
-            mu, h_dom, h_eur = theta[:3]
-            A = theta[3:3 + nL]
-            D = theta[3 + nL:3 + 2 * nL]
-            a = theta[3 + 2 * nL:3 + 2 * nL + nT]
-            d = theta[3 + 2 * nL + nT:]
-            return mu, h_dom, h_eur, A, D, a, d
+            mu, h0 = theta[:2]
+            hc = theta[2:o]
+            A = theta[o:o + nL]
+            D = theta[o + nL:o + 2 * nL]
+            a = theta[o + 2 * nL:o + 2 * nL + nT]
+            d = theta[o + 2 * nL + nT:]
+            return mu, h0, hc, A, D, a, d
 
         def loss_grad(theta):
-            mu, h_dom, h_eur, A, D, a, d = unpack(theta)
-            home = np.where(eur, h_eur, h_dom)
-            log_lh = mu + home + A[hl] + a[hi] - D[al] - d[ai]
+            mu, h0, hc, A, D, a, d = unpack(theta)
+            log_lh = mu + h0 + hc[ci] + A[hl] + a[hi] - D[al] - d[ai]
             log_la = mu + A[al] + a[ai] - D[hl] - d[hi]
             lh, la = np.exp(log_lh), np.exp(log_la)
             nll = np.sum(w * (lh - yh * log_lh + la - ya * log_la))
@@ -92,34 +101,39 @@ class DixonColesModel:
 
             g = np.zeros_like(theta)
             g[0] = rh.sum() + ra.sum()
-            g[1] = rh[~eur].sum()
-            g[2] = rh[eur].sum()
-            g[3:3 + nL] = np.bincount(hl, rh, nL) + np.bincount(al, ra, nL)
-            g[3 + nL:3 + 2 * nL] = -np.bincount(al, rh, nL) - np.bincount(hl, ra, nL)
-            g[3 + 2 * nL:3 + 2 * nL + nT] = np.bincount(hi, rh, nT) + np.bincount(ai, ra, nT)
-            g[3 + 2 * nL + nT:] = -np.bincount(ai, rh, nT) - np.bincount(hi, ra, nT)
+            g[1] = rh.sum()
+            g[2:o] = np.bincount(ci, rh, nC)
+            g[o:o + nL] = np.bincount(hl, rh, nL) + np.bincount(al, ra, nL)
+            g[o + nL:o + 2 * nL] = -np.bincount(al, rh, nL) - np.bincount(hl, ra, nL)
+            g[o + 2 * nL:o + 2 * nL + nT] = np.bincount(hi, rh, nT) + np.bincount(ai, ra, nT)
+            g[o + 2 * nL + nT:] = -np.bincount(ai, rh, nT) - np.bincount(hi, ra, nT)
 
-            league_part = theta[3:3 + 2 * nL]
-            team_part = theta[3 + 2 * nL:]
-            nll += self.league_ridge * league_part @ league_part + self.team_ridge * team_part @ team_part
-            g[3:3 + 2 * nL] += 2 * self.league_ridge * league_part
-            g[3 + 2 * nL:] += 2 * self.team_ridge * team_part
+            home_part = theta[2:o]
+            league_part = theta[o:o + 2 * nL]
+            team_part = theta[o + 2 * nL:]
+            nll += (self.home_ridge * home_part @ home_part
+                    + self.league_ridge * league_part @ league_part
+                    + self.team_ridge * team_part @ team_part)
+            g[2:o] += 2 * self.home_ridge * home_part
+            g[o:o + 2 * nL] += 2 * self.league_ridge * league_part
+            g[o + 2 * nL:] += 2 * self.team_ridge * team_part
             return nll, g
 
-        theta0 = np.zeros(3 + 2 * nL + 2 * nT)
+        theta0 = np.zeros(o + 2 * nL + 2 * nT)
         theta0[0] = np.log(max(np.average(ya, weights=w), 0.1))
-        theta0[1] = theta0[2] = 0.2
-        res = minimize(loss_grad, theta0, jac=True, method="L-BFGS-B", options={"maxiter": 2000})
-        mu, h_dom, h_eur, A, D, a, d = unpack(res.x)
-        self.mu, self.home_adv_domestic, self.home_adv_european = mu, h_dom, h_eur
+        theta0[1] = 0.2
+        res = minimize(loss_grad, theta0, jac=True, method="L-BFGS-B", options={"maxiter": 3000})
+        mu, h0, hc, A, D, a, d = unpack(res.x)
+        self.mu = mu
+        self.home_adv_default = h0
+        self.home_adv = {c: h0 + h for c, h in zip(self.comp_ids, hc)}
         self.attack = A[self.team_league] + a
         self.defence = D[self.team_league] + d
         self.league_attack = dict(zip(self.league_ids, A))
         self.league_defence = dict(zip(self.league_ids, D))
 
         # Dixon-Coles low-score correlation, fitted on the same weighted data.
-        home = np.where(eur, h_eur, h_dom)
-        lh = np.exp(mu + home + self.attack[hi] - self.defence[ai])
+        lh = np.exp(mu + h0 + hc[ci] + self.attack[hi] - self.defence[ai])
         la = np.exp(mu + self.attack[ai] - self.defence[hi])
         low = (yh <= 1) & (ya <= 1)
 
@@ -156,16 +170,19 @@ class DixonColesModel:
     def knows(self, team_id):
         return team_id in self.team_idx
 
-    def expected_goals(self, home_id, away_id, european=False, neutral=False):
+    def home_advantage(self, league_id=None, european=False):
+        return self.home_adv.get(EUROPE if european else league_id, self.home_adv_default)
+
+    def expected_goals(self, home_id, away_id, european=False, neutral=False, league_id=None):
         h, a = self.team_idx[home_id], self.team_idx[away_id]
-        home_adv = 0.0 if neutral else (self.home_adv_european if european else self.home_adv_domestic)
+        home_adv = 0.0 if neutral else self.home_advantage(league_id, european)
         lh = np.exp(self.mu + home_adv + self.attack[h] - self.defence[a])
         la = np.exp(self.mu + self.attack[a] - self.defence[h])
         return lh, la
 
-    def score_matrix(self, home_id, away_id, european=False, neutral=False):
+    def score_matrix(self, home_id, away_id, european=False, neutral=False, league_id=None):
         """P(home scores i, away scores j) for i, j in 0..MAX_GOALS."""
-        lh, la = self.expected_goals(home_id, away_id, european, neutral)
+        lh, la = self.expected_goals(home_id, away_id, european, neutral, league_id)
         return score_matrix(lh, la, self.rho)
 
     def ratings(self):

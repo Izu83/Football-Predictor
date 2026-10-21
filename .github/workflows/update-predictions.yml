@@ -2,7 +2,8 @@ name: Update predictions
 
 on:
   schedule:
-    - cron: "0 6 * * *"   # every day at 06:00 UTC
+    - cron: "0 6 * * *"    # morning run
+    - cron: "0 15 * * *"   # afternoon run: fresher odds before evening kickoffs
   workflow_dispatch:       # "Run workflow" button on the Actions tab
   push:
     branches: [main]
@@ -45,16 +46,17 @@ jobs:
       - name: Download match history
         run: python -m football_predictor update
 
-      - name: Predict the next three days
-        run: python -m football_predictor predict --days 3 --html index.html
+      - name: Score finished matches and predict the next three days
+        run: python -m football_predictor predict --days 3 --track --html index.html
 
-      - name: Commit the new page
+      - name: Commit the new page and track record
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
+          git add index.html history/predictions.csv
           if ! git diff --cached --quiet; then
             git commit -m "Update predictions $(date -u +%Y-%m-%d)"
+            git pull --rebase
             git push
           fi
 

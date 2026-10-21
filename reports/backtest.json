@@ -1,143 +1,472 @@
 {
-  "period": "2025-08-01 to 2026-06-01",
-  "parameters": {},
-  "overall": {
-    "matches": 7482,
-    "log_loss": 1.003443186030301,
-    "base_rate_log_loss": 1.0738148011033763,
-    "accuracy": 0.5084202085004009
+  "tune_period": "2024-08-01 to 2025-06-01",
+  "test_period": "2025-08-01 to 2026-06-01",
+  "model": {
+    "half_life_days": 180,
+    "team_ridge": 2.0
+  },
+  "chosen": {
+    "blend_weight": 0.0,
+    "value_weight": 1.0,
+    "min_edge": 0.03
+  },
+  "accuracy": {
+    "matches": 13923,
+    "model_log_loss": 1.005840943891297,
+    "base_rate_log_loss": 1.0736105723538343,
+    "model_favourite_won": 0.5040580334697982,
+    "big5_matches": 1752,
+    "big5_model_log_loss": 0.9968562492636525,
+    "big5_bet365_log_loss": 0.9790366677601703,
+    "big5_shown_log_loss": 0.9790366677601703,
+    "big5_pinnacle_closing_log_loss": 0.9640742189637539,
+    "big5_pinnacle_matches": 898
   },
   "by_competition": [
     {
-      "competition": "Champions League",
-      "matches": 188,
-      "log_loss": 0.9237842881052493,
-      "accuracy": 0.5904255319148937
+      "competition": "Championship",
+      "matches": 553,
+      "log_loss": 1.066054347924873,
+      "favourite_won": 0.4376130198915009
+    },
+    {
+      "competition": "LaLiga2",
+      "matches": 459,
+      "log_loss": 1.0582890150757167,
+      "favourite_won": 0.4553376906318083
+    },
+    {
+      "competition": "Serie B",
+      "matches": 386,
+      "log_loss": 1.0410994732332983,
+      "favourite_won": 0.4430051813471503
     },
     {
       "competition": "Premier League",
       "matches": 380,
-      "log_loss": 1.036495234409867,
-      "accuracy": 0.4710526315789474
-    },
-    {
-      "competition": "Ligue 1",
-      "matches": 305,
-      "log_loss": 0.9936972165554767,
-      "accuracy": 0.521311475409836
-    },
-    {
-      "competition": "Bundesliga",
-      "matches": 305,
-      "log_loss": 0.9708647454191883,
-      "accuracy": 0.5508196721311476
+      "log_loss": 1.0374180547759857,
+      "favourite_won": 0.46842105263157896
     },
     {
       "competition": "Serie A",
-      "matches": 378,
-      "log_loss": 0.998950038166729,
-      "accuracy": 0.5211640211640212
+      "matches": 380,
+      "log_loss": 0.9992529397338169,
+      "favourite_won": 0.5263157894736842
+    },
+    {
+      "competition": "LaLiga",
+      "matches": 380,
+      "log_loss": 0.9753078393769822,
+      "favourite_won": 0.5342105263157895
+    },
+    {
+      "competition": "Eerste Divisie",
+      "matches": 380,
+      "log_loss": 1.0441066620190331,
+      "favourite_won": 0.4763157894736842
+    },
+    {
+      "competition": "Eredivisie",
+      "matches": 309,
+      "log_loss": 0.9803975232894986,
+      "favourite_won": 0.5080906148867314
+    },
+    {
+      "competition": "Ligue 1",
+      "matches": 306,
+      "log_loss": 0.9938677643148234,
+      "favourite_won": 0.5130718954248366
+    },
+    {
+      "competition": "Bundesliga",
+      "matches": 306,
+      "log_loss": 0.9732570455967474,
+      "favourite_won": 0.5490196078431373
+    },
+    {
+      "competition": "Liga Portugal",
+      "matches": 306,
+      "log_loss": 0.9257470252626514,
+      "favourite_won": 0.5686274509803921
+    },
+    {
+      "competition": "First Division A",
+      "matches": 305,
+      "log_loss": 1.030278607929135,
+      "favourite_won": 0.4557377049180328
+    },
+    {
+      "competition": "S\u00fcper Lig",
+      "matches": 304,
+      "log_loss": 0.9982233683319391,
+      "favourite_won": 0.5131578947368421
+    },
+    {
+      "competition": "2. Bundesliga",
+      "matches": 304,
+      "log_loss": 1.0567726531043133,
+      "favourite_won": 0.4506578947368421
+    },
+    {
+      "competition": "Liga Portugal 2",
+      "matches": 304,
+      "log_loss": 1.0997144744197431,
+      "favourite_won": 0.4243421052631579
+    },
+    {
+      "competition": "Ligue 2",
+      "matches": 301,
+      "log_loss": 1.0744623898980965,
+      "favourite_won": 0.4219269102990033
+    },
+    {
+      "competition": "Liga I",
+      "matches": 293,
+      "log_loss": 1.0221439141626154,
+      "favourite_won": 0.5017064846416383
+    },
+    {
+      "competition": "Ekstraklasa",
+      "matches": 289,
+      "log_loss": 1.0900070506390598,
+      "favourite_won": 0.4359861591695502
+    },
+    {
+      "competition": "Super Liga",
+      "matches": 282,
+      "log_loss": 0.9960126890430867,
+      "favourite_won": 0.5319148936170213
+    },
+    {
+      "competition": "First Professional League",
+      "matches": 276,
+      "log_loss": 1.0132917940159911,
+      "favourite_won": 0.463768115942029
+    },
+    {
+      "competition": "1. Liga",
+      "matches": 260,
+      "log_loss": 1.0039597767395798,
+      "favourite_won": 0.5038461538461538
+    },
+    {
+      "competition": "Ligat ha'Al",
+      "matches": 239,
+      "log_loss": 1.002424669953042,
+      "favourite_won": 0.5104602510460251
+    },
+    {
+      "competition": "National Division",
+      "matches": 238,
+      "log_loss": 0.9930633824144461,
+      "favourite_won": 0.5084033613445378
+    },
+    {
+      "competition": "1. Division",
+      "matches": 237,
+      "log_loss": 0.933124478938358,
+      "favourite_won": 0.5654008438818565
+    },
+    {
+      "competition": "Premier League",
+      "matches": 236,
+      "log_loss": 0.9852963590417108,
+      "favourite_won": 0.5423728813559322
+    },
+    {
+      "competition": "Super League 1",
+      "matches": 235,
+      "log_loss": 0.9616184091165836,
+      "favourite_won": 0.5106382978723404
+    },
+    {
+      "competition": "Premiership",
+      "matches": 230,
+      "log_loss": 0.9709159228664023,
+      "favourite_won": 0.5565217391304348
+    },
+    {
+      "competition": "Premiership",
+      "matches": 227,
+      "log_loss": 0.9849744395845158,
+      "favourite_won": 0.5330396475770925
+    },
+    {
+      "competition": "Super League",
+      "matches": 222,
+      "log_loss": 1.0479971003677253,
+      "favourite_won": 0.47297297297297297
+    },
+    {
+      "competition": "Eliteserien",
+      "matches": 200,
+      "log_loss": 0.9411426935515214,
+      "favourite_won": 0.575
+    },
+    {
+      "competition": "Premier League",
+      "matches": 199,
+      "log_loss": 1.0024777577877992,
+      "favourite_won": 0.5276381909547738
+    },
+    {
+      "competition": "Prva Liga",
+      "matches": 196,
+      "log_loss": 0.9467361014737083,
+      "favourite_won": 0.5867346938775511
+    },
+    {
+      "competition": "Premier League",
+      "matches": 195,
+      "log_loss": 0.9386886208784561,
+      "favourite_won": 0.5641025641025641
+    },
+    {
+      "competition": "Bundesliga",
+      "matches": 194,
+      "log_loss": 1.0878559767363736,
+      "favourite_won": 0.42783505154639173
+    },
+    {
+      "competition": "Cymru Premier",
+      "matches": 194,
+      "log_loss": 0.9965179730550534,
+      "favourite_won": 0.5309278350515464
+    },
+    {
+      "competition": "Nemzeti Bajnoks\u00e1g I",
+      "matches": 192,
+      "log_loss": 1.0334393378385949,
+      "favourite_won": 0.4895833333333333
+    },
+    {
+      "competition": "Champions League",
+      "matches": 189,
+      "log_loss": 0.9177663935912829,
+      "favourite_won": 0.5873015873015873
     },
     {
       "competition": "Europa League",
       "matches": 189,
-      "log_loss": 0.9601010024820674,
-      "accuracy": 0.5555555555555556
+      "log_loss": 0.9556080183169903,
+      "favourite_won": 0.582010582010582
     },
     {
-      "competition": "LaLiga",
-      "matches": 377,
-      "log_loss": 0.9820699821965011,
-      "accuracy": 0.519893899204244
+      "competition": "1. liga",
+      "matches": 186,
+      "log_loss": 1.0130507737998347,
+      "favourite_won": 0.510752688172043
+    },
+    {
+      "competition": "Kategoria Superiore",
+      "matches": 184,
+      "log_loss": 1.085030838234987,
+      "favourite_won": 0.41847826086956524
+    },
+    {
+      "competition": "Allsvenskan",
+      "matches": 182,
+      "log_loss": 1.0524254657509298,
+      "favourite_won": 0.46153846153846156
+    },
+    {
+      "competition": "Superligaen",
+      "matches": 181,
+      "log_loss": 1.051172423096786,
+      "favourite_won": 0.5359116022099447
+    },
+    {
+      "competition": "1. CFL",
+      "matches": 180,
+      "log_loss": 1.063830034983912,
+      "favourite_won": 0.4722222222222222
+    },
+    {
+      "competition": "HNL",
+      "matches": 179,
+      "log_loss": 1.0015921938957686,
+      "favourite_won": 0.5251396648044693
+    },
+    {
+      "competition": "Premier League",
+      "matches": 176,
+      "log_loss": 0.9511478960818421,
+      "favourite_won": 0.5681818181818182
+    },
+    {
+      "competition": "Erovnuli Liga",
+      "matches": 166,
+      "log_loss": 1.031614166401384,
+      "favourite_won": 0.4939759036144578
     },
     {
       "competition": "Conference League",
-      "matches": 147,
-      "log_loss": 0.9951160191575242,
-      "accuracy": 0.5578231292517006
+      "matches": 153,
+      "log_loss": 0.9768562683679823,
+      "favourite_won": 0.5359477124183006
+    },
+    {
+      "competition": "Premier League",
+      "matches": 152,
+      "log_loss": 1.0110569762596946,
+      "favourite_won": 0.45394736842105265
+    },
+    {
+      "competition": "Premier Division",
+      "matches": 151,
+      "log_loss": 1.0512304876961378,
+      "favourite_won": 0.423841059602649
+    },
+    {
+      "competition": "Prva Liga",
+      "matches": 151,
+      "log_loss": 0.9645329690879115,
+      "favourite_won": 0.5496688741721855
+    },
+    {
+      "competition": "Premium liiga",
+      "matches": 144,
+      "log_loss": 0.8646531481754685,
+      "favourite_won": 0.6180555555555556
+    },
+    {
+      "competition": "Virsliga",
+      "matches": 139,
+      "log_loss": 0.9087315254946504,
+      "favourite_won": 0.5611510791366906
+    },
+    {
+      "competition": "Toplyga",
+      "matches": 139,
+      "log_loss": 1.0693541620728326,
+      "favourite_won": 0.4460431654676259
+    },
+    {
+      "competition": "Premier League",
+      "matches": 135,
+      "log_loss": 0.8669503352146807,
+      "favourite_won": 0.6222222222222222
+    },
+    {
+      "competition": "Veikkausliiga",
+      "matches": 132,
+      "log_loss": 1.0027921825258788,
+      "favourite_won": 0.5075757575757576
+    },
+    {
+      "competition": "Besta deildin",
+      "matches": 121,
+      "log_loss": 1.0012985604068472,
+      "favourite_won": 0.5041322314049587
+    },
+    {
+      "competition": "Premier League",
+      "matches": 114,
+      "log_loss": 0.8467322414537898,
+      "favourite_won": 0.6052631578947368
+    },
+    {
+      "competition": "Conference League Qualification",
+      "matches": 108,
+      "log_loss": 0.9913482699746118,
+      "favourite_won": 0.5370370370370371
     }
   ],
-  "vs_market": {
-    "matches": 1745,
-    "model_log_loss": 0.9976521978184107,
-    "bet365_log_loss": 0.9779224353083005,
-    "model_accuracy": 0.5151862464183381,
-    "bet365_accuracy": 0.5335243553008596,
-    "pinnacle_closing_log_loss": 0.9618949766721309,
-    "best_model_weight": 0.0
-  },
-  "value_bets": [
+  "picks_with_odds": [
     {
-      "model_weight": 0.35,
-      "min_edge": 0.03,
-      "bets": 587,
-      "won": 0.3594548551959114,
-      "roi": -0.09201873935264054,
-      "current_settings": false
+      "tier": "High",
+      "picks": 1019,
+      "stated": 0.7773048951939037,
+      "won": 0.7850834151128557
     },
     {
-      "model_weight": 0.35,
-      "min_edge": 0.05,
-      "bets": 308,
-      "won": 0.3474025974025974,
-      "roi": -0.06272727272727273,
-      "current_settings": true
-    },
-    {
-      "model_weight": 0.35,
-      "min_edge": 0.1,
-      "bets": 78,
-      "won": 0.24358974358974358,
-      "roi": -0.21987179487179484,
-      "current_settings": false
-    },
-    {
-      "model_weight": 0.5,
-      "min_edge": 0.03,
-      "bets": 1231,
-      "won": 0.3777416734362307,
-      "roi": -0.09222583265637695,
-      "current_settings": false
-    },
-    {
-      "model_weight": 0.5,
-      "min_edge": 0.05,
-      "bets": 790,
-      "won": 0.3556962025316456,
-      "roi": -0.10929746835443038,
-      "current_settings": false
-    },
-    {
-      "model_weight": 0.5,
-      "min_edge": 0.1,
-      "bets": 257,
-      "won": 0.33852140077821014,
-      "roi": -0.07595330739299609,
-      "current_settings": false
-    },
-    {
-      "model_weight": 1.0,
-      "min_edge": 0.03,
-      "bets": 2717,
-      "won": 0.40338608759661393,
-      "roi": -0.08948656606551345,
-      "current_settings": false
-    },
-    {
-      "model_weight": 1.0,
-      "min_edge": 0.05,
-      "bets": 2240,
-      "won": 0.390625,
-      "roi": -0.09871205357142858,
-      "current_settings": false
-    },
-    {
-      "model_weight": 1.0,
-      "min_edge": 0.1,
-      "bets": 1301,
-      "won": 0.3727901614142967,
-      "roi": -0.10206764027671024,
-      "current_settings": false
+      "tier": "Medium",
+      "picks": 733,
+      "stated": 0.6788339881723303,
+      "won": 0.7203274215552524
     }
-  ]
+  ],
+  "picks_model_only": [
+    {
+      "tier": "High",
+      "picks": 7435,
+      "stated": 0.7766618018749,
+      "won": 0.7713517148621385
+    },
+    {
+      "tier": "Medium",
+      "picks": 6477,
+      "stated": 0.6780183798190335,
+      "won": 0.6768565693994133
+    },
+    {
+      "tier": "Low",
+      "picks": 11,
+      "stated": 0.5522754026779588,
+      "won": 0.7272727272727273
+    }
+  ],
+  "calibration": [
+    {
+      "stated": 0.07123449429877317,
+      "actual": 0.07328072153325817,
+      "n": 887
+    },
+    {
+      "stated": 0.16130174432757088,
+      "actual": 0.1527689369828135,
+      "n": 4713
+    },
+    {
+      "stated": 0.2536961374365033,
+      "actual": 0.261037037037037,
+      "n": 16875
+    },
+    {
+      "stated": 0.34455210360387983,
+      "actual": 0.34111378916656093,
+      "n": 7883
+    },
+    {
+      "stated": 0.44648086736502796,
+      "actual": 0.43885843885843884,
+      "n": 5291
+    },
+    {
+      "stated": 0.544896617920673,
+      "actual": 0.5345893435384163,
+      "n": 3397
+    },
+    {
+      "stated": 0.6445178815390661,
+      "actual": 0.6365824308062575,
+      "n": 1662
+    },
+    {
+      "stated": 0.7431678004012846,
+      "actual": 0.7908745247148289,
+      "n": 789
+    },
+    {
+      "stated": 0.838336243601536,
+      "actual": 0.8225108225108225,
+      "n": 231
+    },
+    {
+      "stated": 0.9225723019361869,
+      "actual": 0.8292682926829268,
+      "n": 41
+    }
+  ],
+  "value_bets": {
+    "bets": 2811,
+    "won": 0.40768409818569906,
+    "roi": -0.09328175026680897,
+    "roi_90": [
+      -0.12567849519743865,
+      -0.05895535396655999
+    ],
+    "tune_roi": -0.08826272577996716,
+    "tune_bets": 3045
+  }
 }

@@ -13,9 +13,33 @@ class Bet:
     model_return: float        # expected return per 1 unit staked, from the model alone
     market_return: float       # same, if the bookmaker's (de-vigged) price were exactly right
     model_win_prob: float      # probability the bet wins (excluding pushes)
+    kind: str = ""             # how to settle it: "1x2", "btts", "ah" or "ou"
+    side: str = ""             # home/draw/away, yes/no, over/under
+    line: float = 0.0          # handicap or goal line
 
     def blended_ev(self, model_weight):
         return model_weight * (self.model_return - 1) + (1 - model_weight) * (self.market_return - 1)
+
+
+def settle(kind, side, line, odds, home_goals, away_goals):
+    """Profit per 1 unit staked once the final score is known."""
+    if kind == "1x2":
+        diff = home_goals - away_goals
+        won = {"home": diff > 0, "draw": diff == 0, "away": diff < 0}[side]
+        return odds - 1 if won else -1.0
+    if kind == "btts":
+        both = home_goals > 0 and away_goals > 0
+        return odds - 1 if both == (side == "yes") else -1.0
+    if kind == "ou":
+        over = home_goals + away_goals > line
+        return odds - 1 if over == (side == "over") else -1.0
+    if kind == "ah":
+        if abs(line * 4) % 2 == 1:  # quarter line: half the stake on each neighbouring line
+            return 0.5 * (settle(kind, side, line - 0.25, odds, home_goals, away_goals)
+                          + settle(kind, side, line + 0.25, odds, home_goals, away_goals))
+        margin = (home_goals - away_goals if side == "home" else away_goals - home_goals) + line
+        return odds - 1 if margin > 0 else 0.0 if margin == 0 else -1.0
+    raise ValueError(kind)
 
 
 class MatchProbabilities:
@@ -93,16 +117,18 @@ def candidate_bets(probs: MatchProbabilities, odds_markets, home_name, away_name
         if {"1", "x", "2"} <= prices.keys():
             odds = [prices["1"], prices["x"], prices["2"]]
             fair = _fair(odds)
-            for label, p, o, q in zip((home_name, "Draw", away_name), (probs.home, probs.draw, probs.away), odds, fair):
-                bets.append(Bet("1X2", label, o, p * o, q * o, p))
+            for label, side, p, o, q in zip((home_name, "Draw", away_name), ("home", "draw", "away"),
+                                            (probs.home, probs.draw, probs.away), odds, fair):
+                bets.append(Bet("1X2", label, o, p * o, q * o, p, "1x2", side))
 
     sels = odds_markets.get("Both Teams to Score")
     if sels and len(sels) == 2:
         prices = {name.lower(): o for name, _, o in sels}
         if {"yes", "no"} <= prices.keys():
             fair = _fair([prices["yes"], prices["no"]])
-            for label, p, o, q in zip(("BTTS Yes", "BTTS No"), (probs.btts, 1 - probs.btts), (prices["yes"], prices["no"]), fair):
-                bets.append(Bet("BTTS", label, o, p * o, q * o, p))
+            for label, side, p, o, q in zip(("BTTS Yes", "BTTS No"), ("yes", "no"), (probs.btts, 1 - probs.btts),
+                                            (prices["yes"], prices["no"]), fair):
+                bets.append(Bet("BTTS", label, o, p * o, q * o, p, "btts", side))
 
     sels = odds_markets.get("Draw No Bet")
     if sels and len(sels) == 2:
@@ -111,7 +137,7 @@ def candidate_bets(probs: MatchProbabilities, odds_markets, home_name, away_name
         for label, side, o, q in ((home_name, "home", o_home, fair[0]), (away_name, "away", o_away, fair[1])):
             bets.append(Bet("Draw No Bet", label, o,
                             probs.asian_handicap_return(0, o, side), q * o,
-                            probs.asian_handicap_win_prob(0, side)))
+                            probs.asian_handicap_win_prob(0, side), "ah", side, 0.0))
 
     sels = odds_markets.get("Asian Handicap")
     if sels and len(sels) == 2:
@@ -125,7 +151,7 @@ def candidate_bets(probs: MatchProbabilities, odds_markets, home_name, away_name
             ):
                 bets.append(Bet("Asian Handicap", label, o,
                                 probs.asian_handicap_return(ln, o, side), q * o,
-                                probs.asian_handicap_win_prob(ln, side)))
+                                probs.asian_handicap_win_prob(ln, side), "ah", side, ln))
 
     # Over/under is not always offered; handle the common header names.
     for header in ("Match Goals", "Total Goals", "Goals Over/Under", "Over/Under"):
@@ -141,8 +167,9 @@ def candidate_bets(probs: MatchProbabilities, odds_markets, home_name, away_name
         o_over, o_under = sels[0][2], sels[1][2]
         fair = _fair([o_over, o_under])
         p_over = probs.over(line)
-        bets.append(Bet("Over/Under", f"Over {line}", o_over, p_over * o_over, fair[0] * o_over, p_over))
-        bets.append(Bet("Over/Under", f"Under {line}", o_under, (1 - p_over) * o_under, fair[1] * o_under, 1 - p_over))
+        bets.append(Bet("Over/Under", f"Over {line}", o_over, p_over * o_over, fair[0] * o_over, p_over, "ou", "over", line))
+        bets.append(Bet("Over/Under", f"Under {line}", o_under, (1 - p_over) * o_under, fair[1] * o_under, 1 - p_over,
+                        "ou", "under", line))
         break
 
     return bets

@@ -127,3 +127,16 @@ def match_odds(match_id, country=ODDS_COUNTRY):
                     continue
             markets[market["header"]] = sels
     return markets, bookmaker
+
+
+def match_result(match_id):
+    """(finished, cancelled, home goals, away goals) for one match."""
+    data = get_json(f"{BASE}/matchDetails", {"matchId": match_id}, max_age=30 * 60)
+    header = data.get("header", {})
+    status = header.get("status", {})
+    teams = header.get("teams", [{}, {}])
+    if status.get("cancelled") or status.get("awarded"):
+        return False, True, None, None
+    if not status.get("finished"):
+        return False, False, None, None
+    return True, False, int(teams[0].get("score", 0)), int(teams[1].get("score", 0))

@@ -67,3 +67,33 @@ def test_model_ranks_stronger_team_higher():
     model = DixonColesModel(team_ridge=0.5).fit(pd.DataFrame(rows))
     ranking = list(model.ratings()["team_id"])
     assert ranking[0] == 0 and ranking[-1] == 3
+
+
+@pytest.mark.parametrize("kind,side,line,hg,ag,expected", [
+    ("1x2", "home", 0, 2, 1, 1.0),
+    ("1x2", "draw", 0, 1, 1, 1.0),
+    ("1x2", "away", 0, 1, 1, -1.0),
+    ("btts", "yes", 0, 1, 1, 1.0),
+    ("btts", "no", 0, 2, 0, 1.0),
+    ("ou", "over", 2.5, 2, 1, 1.0),
+    ("ou", "under", 2.5, 2, 1, -1.0),
+    ("ah", "away", 0.0, 1, 1, 0.0),      # draw no bet: stake back
+    ("ah", "home", -0.75, 1, 0, 0.5),    # half win, half push
+    ("ah", "away", 0.25, 1, 1, 0.5),     # half win, half push
+])
+def test_settle(kind, side, line, hg, ag, expected):
+    from football_predictor.markets import settle
+    assert settle(kind, side, line, 2.0, hg, ag) == pytest.approx(expected)
+
+
+def test_pick_avoids_near_certain_outcomes():
+    from football_predictor.picks import pick, tier
+    key, label, prob = pick([0.90, 0.07, 0.03], 0.6, 0.5, "A", "B")
+    assert prob < 0.85 and key != "home_or_draw"
+    assert tier(0.80) == "High" and tier(0.65) == "Medium" and tier(0.5) == "Low"
+
+
+def test_blend_uses_model_without_market():
+    from football_predictor.picks import blend
+    assert list(blend([0.5, 0.3, 0.2], None, 0.0)) == [0.5, 0.3, 0.2]
+    assert blend([0.5, 0.3, 0.2], [0.4, 0.3, 0.3], 0.0)[0] == pytest.approx(0.4)

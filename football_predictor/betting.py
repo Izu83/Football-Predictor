@@ -1,6 +1,8 @@
-"""Predicts a list of fixtures and picks bets."""
+"""Predicts a list of fixtures: probabilities, the pick, and any value bet."""
 
 from dataclasses import dataclass, field
+
+import numpy as np
 
 from . import fotmob
 from .config import (
@@ -8,12 +10,11 @@ from .config import (
     KELLY_FRACTION,
     MAX_ODDS,
     MAX_STAKE,
-    MIN_EDGE,
     MIN_MATCHES,
     MIN_PROBABILITY,
-    MODEL_WEIGHT,
 )
 from .markets import Bet, MatchProbabilities, candidate_bets
+from .picks import blend, devig, pick, tier, tuned_settings
 
 
 @dataclass
@@ -26,11 +27,22 @@ class ValueBet:
 @dataclass
 class MatchPrediction:
     fixture: fotmob.Fixture
-    probs: MatchProbabilities | None = None
+    probs: MatchProbabilities | None = None   # the model's scoreline distribution
+    p_model: np.ndarray | None = None          # model 1X2
+    p_market: np.ndarray | None = None         # bookmaker 1X2, margin removed
+    p_shown: np.ndarray | None = None          # what we publish: blend of the two
+    p_over25: float = 0.0
+    p_btts: float = 0.0
     bookmaker: str | None = None
     odds_1x2: tuple | None = None
-    value_bets: list = field(default_factory=list)
-    lean: str = ""
+    odds_btts: tuple | None = None             # (yes, no)
+    pick_key: str = ""
+    pick_label: str = ""
+    pick_prob: float = 0.0
+    pick_odds: float | None = None
+    tier: str = ""
+    value_bet: ValueBet | None = None
+    data_ok: bool = True
     note: str = ""
 
 
@@ -42,44 +54,24 @@ def kelly_stake(odds, ev):
     return min(KELLY_FRACTION * ev / b, MAX_STAKE)
 
 
-def select_value_bets(bets, model_weight=MODEL_WEIGHT, min_edge=MIN_EDGE):
-    picks = []
+def best_value_bet(bets, model_weight, min_edge):
+    """The single best bet that passes the value rules, if any."""
+    best = None
     for bet in bets:
         if bet.odds > MAX_ODDS or bet.model_win_prob < MIN_PROBABILITY:
             continue
         ev = bet.blended_ev(model_weight)
-        if ev < min_edge:
-            continue
-        # Stake on the blended view, not the (overconfident) model alone.
-        picks.append(ValueBet(bet, ev, kelly_stake(bet.odds, ev)))
-    picks.sort(key=lambda v: v.ev, reverse=True)
-    # One bet per market per match; correlated bets on the same match add risk, not value.
-    seen, unique = set(), []
-    for v in picks:
-        if v.bet.market not in seen:
-            seen.add(v.bet.market)
-            unique.append(v)
-    return unique[:2]
+        if ev >= min_edge and (best is None or ev > best.ev):
+            # Stake on the blended view, not the (overconfident) model alone.
+            best = ValueBet(bet, ev, kelly_stake(bet.odds, ev))
+    return best
 
 
-def lean(probs, home, away):
-    """The most likely of a few simple outcomes, for matches with no value bet."""
-    options = [
-        (probs.home, f"{home} to win"),
-        (probs.away, f"{away} to win"),
-        (probs.home + probs.draw, f"{home} or draw (1X)"),
-        (probs.away + probs.draw, f"{away} or draw (X2)"),
-        (probs.over(2.5), "Over 2.5 goals"),
-        (1 - probs.over(2.5), "Under 2.5 goals"),
-        (probs.btts, "Both teams to score"),
-        (1 - probs.btts, "Not both teams to score"),
-    ]
-    # Prefer outcomes that are likely but not near-certain (those pay almost nothing).
-    p, label = max((o for o in options if o[0] < 0.85), key=lambda o: o[0])
-    return f"{label} ({p:.0%}, fair odds {1 / p:.2f})"
+PICK_ODDS = {"home": ("1x2", 0), "away": ("1x2", 2), "btts_yes": ("btts", 0), "btts_no": ("btts", 1)}
 
 
 def predict_fixtures(model, fixtures, with_odds=True):
+    settings = tuned_settings()
     predictions = []
     for fx in fixtures:
         pred = MatchPrediction(fx)
@@ -87,22 +79,46 @@ def predict_fixtures(model, fixtures, with_odds=True):
         missing = [n for i, n in ((fx.home_id, fx.home_name), (fx.away_id, fx.away_name))
                    if i is None or not model.knows(i)]
         if missing:
-            pred.note = f"not enough data for {', '.join(missing)}"
+            pred.data_ok = False
+            pred.note = f"No match history for {', '.join(missing)}"
             continue
+
         european = fx.league_id in EUROPEAN_COMPETITIONS
-        pred.probs = MatchProbabilities(model.score_matrix(fx.home_id, fx.away_id, european=european))
-        pred.lean = lean(pred.probs, fx.home_name, fx.away_name)
+        probs = MatchProbabilities(
+            model.score_matrix(fx.home_id, fx.away_id, european=european, league_id=fx.league_id))
+        pred.probs = probs
+        pred.p_model = np.array([probs.home, probs.draw, probs.away])
+        pred.p_over25, pred.p_btts = probs.over(2.5), probs.btts
+
         thin = [n for i, n in ((fx.home_id, fx.home_name), (fx.away_id, fx.away_name))
                 if model.matches_last_year.get(i, 0) < MIN_MATCHES]
         if thin:
-            pred.note = f"little data for {', '.join(thin)}: no value bets"
-        if not with_odds or fx.match_id is None or fx.started:
-            continue
-        odds_markets, pred.bookmaker = fotmob.match_odds(fx.match_id)
-        ftr = odds_markets.get("Full Time Result")
-        if ftr and len(ftr) == 3:
-            pred.odds_1x2 = tuple(o for _, _, o in ftr)
-        bets = candidate_bets(pred.probs, odds_markets, fx.home_name, fx.away_name)
-        if not thin:
-            pred.value_bets = select_value_bets(bets)
+            pred.data_ok = False
+            pred.note = f"Little recent data for {', '.join(thin)}"
+
+        bets = []
+        if with_odds and fx.match_id is not None and not fx.started:
+            markets, pred.bookmaker = fotmob.match_odds(fx.match_id)
+            ftr = markets.get("Full Time Result")
+            if ftr and len(ftr) == 3:
+                pred.odds_1x2 = tuple(o for _, _, o in ftr)
+                pred.p_market = devig(pred.odds_1x2)
+            btts = {name.lower(): o for name, _, o in markets.get("Both Teams to Score", [])}
+            if {"yes", "no"} <= btts.keys():
+                pred.odds_btts = (btts["yes"], btts["no"])
+                pred.p_btts = float(blend(pred.p_btts, devig(pred.odds_btts)[0], settings["blend_weight"]))
+            bets = candidate_bets(probs, markets, fx.home_name, fx.away_name)
+
+        pred.p_shown = blend(pred.p_model, pred.p_market, settings["blend_weight"])
+        pred.pick_key, pred.pick_label, pred.pick_prob = pick(
+            pred.p_shown, pred.p_over25, pred.p_btts, fx.home_name, fx.away_name)
+        pred.tier = tier(pred.pick_prob)
+        market, k = PICK_ODDS.get(pred.pick_key, (None, None))
+        if market == "1x2" and pred.odds_1x2:
+            pred.pick_odds = pred.odds_1x2[k]
+        elif market == "btts" and pred.odds_btts:
+            pred.pick_odds = pred.odds_btts[k]
+
+        if pred.data_ok and bets and settings["value_enabled"]:
+            pred.value_bet = best_value_bet(bets, settings["value_weight"], settings["min_edge"])
     return predictions

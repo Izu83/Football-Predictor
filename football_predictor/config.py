@@ -19,9 +19,52 @@ EUROPEAN_COMPETITIONS = {
     42: "Champions League",
     73: "Europa League",
     10216: "Conference League",
+    10611: "Champions League Qualification",
+    10613: "Europa League Qualification",
+    10615: "Conference League Qualification",
+}
+
+# Second divisions: without them newly promoted teams have almost no history.
+SECOND_DIVISIONS = {
+    86: "Serie B",
+    140: "LaLiga2",
+    146: "2. Bundesliga",
+    110: "Ligue 2",
+    185: "Liga Portugal 2",
+    111: "Eerste Divisie",
+}
+
+# Smaller leagues whose clubs regularly reach the European competitions.
+SMALLER_LEAGUES = {
+    212: "Hungarian NB I",
+    189: "Romanian Liga I",
+    173: "Slovenian PrvaLiga",
+    176: "Slovak 1. liga",
+    225: "Kazakhstan Premier League",
+    262: "Azerbaijan Premier League",
+    118: "Armenian Premier League",
+    439: "Georgian Erovnuli Liga",
+    231: "Moldovan National Division",
+    228: "Lithuanian A Lyga",
+    226: "Latvian Virsliga",
+    248: "Estonian Meistriliiga",
+    51: "Veikkausliiga",
+    215: "Icelandic Besta deildin",
+    126: "League of Ireland",
+    129: "NIFL Premiership",
+    116: "Cymru Premier",
+    267: "Bosnian Premier League",
+    260: "Albanian Kategoria Superiore",
+    249: "Macedonian Prva Liga",
+    232: "Montenegrin 1. CFL",
+    229: "Luxembourg National Division",
+    250: "Faroese Premier League",
+    263: "Belarusian Premier League",
 }
 
 DOMESTIC_LEAGUES = {
+    **SECOND_DIVISIONS,
+    **SMALLER_LEAGUES,
     47: "Premier League",
     48: "Championship",
     87: "LaLiga",
@@ -72,14 +115,14 @@ FEATURED_COMPETITIONS = {
     134: "Coupe de France",
 }
 
-# Model defaults (tuned with `python -m football_predictor backtest`).
-HALF_LIFE_DAYS = 240
-TEAM_RIDGE = 3.0
+# Model defaults, chosen on 2024/25 with `python -m football_predictor backtest --tune`.
+HALF_LIFE_DAYS = 180
+TEAM_RIDGE = 2.0
 LEAGUE_RIDGE = 0.5
+HOME_RIDGE = 5.0
 
-# Weight of the model vs the de-vigged bookmaker price when both are available.
-# In the 2025/26 backtest bet365's prices were more accurate than the model on
-# their own, so the model only nudges the market price.
+# Fallbacks only: `backtest` chooses the model/bookmaker blend and value-bet rule
+# on the tuning season and saves them in reports/backtest.json.
 MODEL_WEIGHT = 0.35
 
 # Value-bet rules.
