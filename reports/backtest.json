@@ -1,0 +1,143 @@
+{
+  "period": "2025-08-01 to 2026-06-01",
+  "parameters": {},
+  "overall": {
+    "matches": 7482,
+    "log_loss": 1.003443186030301,
+    "base_rate_log_loss": 1.0738148011033763,
+    "accuracy": 0.5084202085004009
+  },
+  "by_competition": [
+    {
+      "competition": "Champions League",
+      "matches": 188,
+      "log_loss": 0.9237842881052493,
+      "accuracy": 0.5904255319148937
+    },
+    {
+      "competition": "Premier League",
+      "matches": 380,
+      "log_loss": 1.036495234409867,
+      "accuracy": 0.4710526315789474
+    },
+    {
+      "competition": "Ligue 1",
+      "matches": 305,
+      "log_loss": 0.9936972165554767,
+      "accuracy": 0.521311475409836
+    },
+    {
+      "competition": "Bundesliga",
+      "matches": 305,
+      "log_loss": 0.9708647454191883,
+      "accuracy": 0.5508196721311476
+    },
+    {
+      "competition": "Serie A",
+      "matches": 378,
+      "log_loss": 0.998950038166729,
+      "accuracy": 0.5211640211640212
+    },
+    {
+      "competition": "Europa League",
+      "matches": 189,
+      "log_loss": 0.9601010024820674,
+      "accuracy": 0.5555555555555556
+    },
+    {
+      "competition": "LaLiga",
+      "matches": 377,
+      "log_loss": 0.9820699821965011,
+      "accuracy": 0.519893899204244
+    },
+    {
+      "competition": "Conference League",
+      "matches": 147,
+      "log_loss": 0.9951160191575242,
+      "accuracy": 0.5578231292517006
+    }
+  ],
+  "vs_market": {
+    "matches": 1745,
+    "model_log_loss": 0.9976521978184107,
+    "bet365_log_loss": 0.9779224353083005,
+    "model_accuracy": 0.5151862464183381,
+    "bet365_accuracy": 0.5335243553008596,
+    "pinnacle_closing_log_loss": 0.9618949766721309,
+    "best_model_weight": 0.0
+  },
+  "value_bets": [
+    {
+      "model_weight": 0.35,
+      "min_edge": 0.03,
+      "bets": 587,
+      "won": 0.3594548551959114,
+      "roi": -0.09201873935264054,
+      "current_settings": false
+    },
+    {
+      "model_weight": 0.35,
+      "min_edge": 0.05,
+      "bets": 308,
+      "won": 0.3474025974025974,
+      "roi": -0.06272727272727273,
+      "current_settings": true
+    },
+    {
+      "model_weight": 0.35,
+      "min_edge": 0.1,
+      "bets": 78,
+      "won": 0.24358974358974358,
+      "roi": -0.21987179487179484,
+      "current_settings": false
+    },
+    {
+      "model_weight": 0.5,
+      "min_edge": 0.03,
+      "bets": 1231,
+      "won": 0.3777416734362307,
+      "roi": -0.09222583265637695,
+      "current_settings": false
+    },
+    {
+      "model_weight": 0.5,
+      "min_edge": 0.05,
+      "bets": 790,
+      "won": 0.3556962025316456,
+      "roi": -0.10929746835443038,
+      "current_settings": false
+    },
+    {
+      "model_weight": 0.5,
+      "min_edge": 0.1,
+      "bets": 257,
+      "won": 0.33852140077821014,
+      "roi": -0.07595330739299609,
+      "current_settings": false
+    },
+    {
+      "model_weight": 1.0,
+      "min_edge": 0.03,
+      "bets": 2717,
+      "won": 0.40338608759661393,
+      "roi": -0.08948656606551345,
+      "current_settings": false
+    },
+    {
+      "model_weight": 1.0,
+      "min_edge": 0.05,
+      "bets": 2240,
+      "won": 0.390625,
+      "roi": -0.09871205357142858,
+      "current_settings": false
+    },
+    {
+      "model_weight": 1.0,
+      "min_edge": 0.1,
+      "bets": 1301,
+      "won": 0.3727901614142967,
+      "roi": -0.10206764027671024,
+      "current_settings": false
+    }
+  ]
+}

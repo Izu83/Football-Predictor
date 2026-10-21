@@ -1,0 +1,69 @@
+name: Update predictions
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # every day at 06:00 UTC
+  workflow_dispatch:       # "Run workflow" button on the Actions tab
+  push:
+    branches: [main]
+    paths:
+      - "football_predictor/**"
+      - ".github/workflows/update-predictions.yml"
+
+permissions:
+  contents: write   # commit the refreshed index.html
+  pages: write      # publish to GitHub Pages
+  id-token: write
+
+concurrency:
+  group: update-predictions
+  cancel-in-progress: false
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # Finished seasons never change, so keep the FotMob downloads between runs.
+      - uses: actions/cache@v4
+        with:
+          path: data/cache
+          key: fotmob-${{ github.run_id }}
+          restore-keys: fotmob-
+
+      - name: Download match history
+        run: python -m football_predictor update
+
+      - name: Predict the next three days
+        run: python -m football_predictor predict --days 3 --html index.html
+
+      - name: Commit the new page
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Update predictions $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Prepare the site
+        run: mkdir -p _site && cp index.html _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

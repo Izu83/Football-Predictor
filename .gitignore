@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Downloaded data; rebuild with `python -m football_predictor update`
+data/
